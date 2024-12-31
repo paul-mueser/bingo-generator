@@ -1,0 +1,26 @@
+# Latex Temp files
+*.log
+*.out
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.tar
+*.tar.xz
+
+#JetBrains
+/.idea
+/*/.idea
+
+#Other
+.DS_Store
+log_*.txt
+/temp/
+/output/
+
+#Python
+/__pycache__/
+*.pyc
+
+#Repo Specific
+*.txt
