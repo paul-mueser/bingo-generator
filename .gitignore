@@ -24,3 +24,4 @@ log_*.txt
 
 #Repo Specific
 *.txt
+*.csv

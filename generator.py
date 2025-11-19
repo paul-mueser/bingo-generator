@@ -1,55 +1,88 @@
 import sys
 import random
-from tabulate import tabulate
+import csv
 
-with open("input.txt", encoding='utf-8') as file:
-    content = file.read()
+def main(content, player_count, event_index):
+    events = get_events_dict(content, event_index)
 
-
-participants = sys.argv[1:]
-max_length = 25
-
-content = content.split("---\n")
-
-def insert_line_breaks(text, min_length=20):
-    words = text.split()
-    result = []
-    current_line = ""
-
-    for word in words:
-        if len(current_line) + len(word) + 1 > min_length:
-            result.append(current_line.strip().ljust(max_length))
-            current_line = word
-        else:
-            current_line += " " + word
-
-    if current_line:
-        result.append(current_line.strip().ljust(max_length))
-
-    return "\n".join(result)
-
-def generate_board_content():
-    categories = []
-    result = []
-
-    for i in range(0, len(content), 2):
-        elm = (int(content[i].strip()), content[i+1].strip())
-        categories.append(elm)
-
-    for count, elm in categories:
-        elm = elm.split("\n")
-        random.shuffle(elm)
-        result += elm[:count]
-    random.shuffle(result)
-    return result
-
-for p in participants:
-    res = generate_board_content()
-
-    outdict = {}
+    event_csv_data = []
     for i in range(5):
-        outdict[i] = [insert_line_breaks(item) for item in res[i*5:(i+1)*5]]
+        events_raw = events.get(i+1).get("items")
+        event_csv_data.extend(events_raw)
 
-    f = open(f"{p}.txt", "w", encoding='utf-8')
-    f.write(tabulate(outdict, tablefmt="grid"))
+    f = open("events.csv", "w", encoding='utf-8', newline='')
+    writer = csv.writer(f)
+    writer.writerows(event_csv_data)
     f.close()
+
+    for p in range(1, player_count + 1):
+        selected_events = []
+        for i in range(1, 6):
+            category_count = events.get(i).get("count")
+            category_events = events.get(i).get("items")
+            random.shuffle(category_events)
+            selected_events.extend(category_events[:category_count])
+
+        random.shuffle(selected_events)
+        selected_events = [event[0] for event in selected_events]
+
+        selected_events_csv_data = []
+    
+        for x in range(5):
+            for y in range(5):
+                selected_events_csv_data.append([x + 1, y + 1, selected_events[(x*5)+y]])
+        
+        f = open(f"player_{p}.csv", "w", encoding='utf-8', newline='')
+        writer = csv.writer(f)
+        writer.writerows(selected_events_csv_data)
+        f.close()
+            
+
+
+
+def get_events_dict(content, event_index):
+    content = content.split("---\n")
+    events = {}
+    for i in range(0, len(content), 2):
+        tmp = content[i].strip()
+        tmp = tmp.split("|")
+        categoryId = int(tmp[0].strip())
+        categoryCount = int(tmp[1].strip())
+        if categoryId not in events:
+            events[categoryId] = {"count": categoryCount, "items": []}
+        items, event_index = get_events_for_category(categoryId, content[i+1], event_index)
+        events[categoryId]["items"].extend(items)
+        
+    return events
+
+def get_events_for_category(categoryId, text, event_index):
+    items = []
+    lines = text.strip().split("\n")
+    for line in lines:
+        tmp = line.split("|")
+        event = tmp[0].strip()
+        amountneeded = int(tmp[1].strip())
+        amountbased = 1 if amountneeded > 1 else 0
+
+        item = [event_index, event, amountneeded, amountbased, categoryId]
+        items.append(item)
+        event_index += 1
+    return items, event_index
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if not args or len(args) < 2:
+        print("Please provide at least an event file and a number of players.")
+        sys.exit(1)
+    
+    event_file = args[0]
+    player_count = int(args[1])
+    event_index = 1
+    if len(args) > 2:
+        event_index = int(args[2])
+    
+    with open(event_file, encoding='utf-8') as file:
+        content = file.read()
+
+    main(content, player_count, event_index)
