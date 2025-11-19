@@ -6,8 +6,10 @@ def main(content, player_count, event_index):
     events = get_events_dict(content, event_index)
 
     event_csv_data = []
-    for i in range(5):
-        events_raw = events.get(i+1).get("items")
+    for i in range(1, 6):
+        if i not in events:
+            continue
+        events_raw = events.get(i).get("items")
         event_csv_data.extend(events_raw)
 
     f = open("events.csv", "w", encoding='utf-8', newline='')
@@ -18,6 +20,8 @@ def main(content, player_count, event_index):
     for p in range(1, player_count + 1):
         selected_events = []
         for i in range(1, 6):
+            if i not in events:
+                continue
             category_count = events.get(i).get("count")
             category_events = events.get(i).get("items")
             random.shuffle(category_events)
